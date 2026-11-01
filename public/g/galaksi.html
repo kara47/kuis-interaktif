@@ -165,7 +165,7 @@ kbd{font-family:var(--head);font-size:10.5px;padding:3px 7px;border-radius:6px;b
     <button class="btn" id="btnStart" type="button">MULAI MISI</button>
     <div class="how">
       <div><kbd>←</kbd><kbd>→</kbd> atau <kbd>A</kbd><kbd>D</kbd> gerak &nbsp;·&nbsp; <kbd>SPASI</kbd> tembak</div>
-      <div>📱 Di HP: sentuh & geser layar untuk bergerak, pesawat menembak otomatis.</div>
+      <div>📱 Di HP: sentuh atau geser layar untuk memindahkan pesawat, lalu sentuh pesawatnya untuk menembak.</div>
       <div>🎯 Tembak musuh yang membawa huruf jawaban yang benar. Tembakan pertama yang kena = jawabanmu.</div>
       <div>⏱️ Jawab sebelum musuh mencapai pesawatmu. Hindari peluru musuh agar skor tidak berkurang.</div>
     </div>
@@ -374,7 +374,7 @@ function enemyR(n){const pad=Math.min(60,W*0.06);return clamp((W-pad*2)/n*0.27,1
 
 const P={x:0,vx:0,tx:null,cool:0,inv:0,tilt:0};
 let bullets=[],eBullets=[],enemies=[],parts=[],rings=[],shake=0,eFire=0;
-const keys={};let pointerDown=false;
+const keys={};let pointerDown=false,meluncur=false,sentuhPesawat=false,sentuhX=0;
 
 function explode(x,y,color,n,power){
   for(let i=0;i<n;i++){const a=Math.random()*Math.PI*2,s=(Math.random()*0.8+0.2)*power;
@@ -644,11 +644,13 @@ function update(dt,now){
   if(active){
     const sp=Math.max(420,W*0.9);let target=0;
     if(keys.left)target-=sp;if(keys.right)target+=sp;
-    if(P.tx!==null&&pointerDown)target=clamp((P.tx-P.x)*12,-sp*1.6,sp*1.6);
+    if(P.tx!==null&&(pointerDown||meluncur))target=clamp((P.tx-P.x)*12,-sp*1.6,sp*1.6);
     P.vx+=(target-P.vx)*Math.min(1,dt*14);P.x=clamp(P.x+P.vx*dt,28*shipS,W-28*shipS);
     P.tilt+=(clamp(P.vx/sp,-1,1)-P.tilt)*Math.min(1,dt*10);
-    if(keys.fire||(isTouch&&pointerDown))fire();
-  }else{P.vx=0;P.tilt*=0.9;P.x+=(W/2-P.x)*Math.min(1,dt*2);}
+    if(keys.fire)fire();
+    // di HP pesawat tetap meluncur ke posisi jari setelah jari diangkat
+    if(meluncur&&Math.abs(P.x-clamp(P.tx,28*shipS,W-28*shipS))<3&&Math.abs(P.vx)<20){meluncur=false;P.tx=null;}
+  }else{meluncur=false;P.vx=0;P.tilt*=0.9;P.x+=(W/2-P.x)*Math.min(1,dt*2);}
   P.cool-=dt;P.inv-=dt;
   // status
   if(state==='countdown'&&now>=cdEnd)showQuestion();
@@ -720,10 +722,15 @@ addEventListener('keydown',e=>{
   const k=KEYMAP[e.code];if(k&&(state==='play'||state==='feedback'||state==='countdown')){keys[k]=true;e.preventDefault();}
 });
 addEventListener('keyup',e=>{const k=KEYMAP[e.code];if(k)keys[k]=false;});
-addEventListener('blur',()=>{for(const k in keys)keys[k]=false;pointerDown=false;});
-cv.addEventListener('pointerdown',e=>{pointerDown=true;P.tx=e.clientX;if(e.pointerType==='mouse')fire();try{cv.setPointerCapture(e.pointerId);}catch(_){}});
-cv.addEventListener('pointermove',e=>{if(pointerDown)P.tx=e.clientX;});
-const up=()=>{pointerDown=false;P.tx=null;};
+addEventListener('blur',()=>{for(const k in keys)keys[k]=false;pointerDown=false;meluncur=false;sentuhPesawat=false;});
+cv.addEventListener('pointerdown',e=>{pointerDown=true;meluncur=false;
+  // sentuhan tanpa geser pada pesawat berarti menembak, sentuhan di tempat lain memindahkan pesawat
+  sentuhPesawat=e.pointerType!=='mouse'&&Math.hypot(e.clientX-P.x,e.clientY-playerY)<Math.max(48,44*shipS);sentuhX=e.clientX;
+  P.tx=sentuhPesawat?null:e.clientX;if(e.pointerType==='mouse')fire();try{cv.setPointerCapture(e.pointerId);}catch(_){}});
+cv.addEventListener('pointermove',e=>{if(!pointerDown)return;if(sentuhPesawat&&Math.abs(e.clientX-sentuhX)<12)return;sentuhPesawat=false;P.tx=e.clientX;});
+const up=e=>{const sentuh=pointerDown&&e.type==='pointerup'&&e.pointerType!=='mouse';pointerDown=false;
+  if(sentuh&&sentuhPesawat)fire();
+  meluncur=sentuh&&P.tx!==null;if(!meluncur)P.tx=null;sentuhPesawat=false;};
 cv.addEventListener('pointerup',up);cv.addEventListener('pointercancel',up);
 // mouse: tahan klik untuk menembak terus
 setInterval(()=>{if(pointerDown&&!isTouch)fire();},60);

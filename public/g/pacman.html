@@ -634,12 +634,13 @@ function update(dt,now){
   if(state==='play'){
     const f=clamp((now-qStart)/1000/CFG.waktu,0,1);
     timerFill.style.transform=`scaleX(${1-f})`;if(f>.75)timerEl.classList.add('low');
-    if(f>=1)answer(null);
+    // jawaban yang sudah dipilih tetap ditunggu sampai Pac-Man tiba
+    if(f>=1&&aim<0)answer(null);
   }
   if(state==='play'){
     kebal=Math.max(0,kebal-dt);tahanHantu=Math.max(0,tahanHantu-dt);
-    gerak(pac,6,dt,pilihPac);
-    if(state==='play'&&tahanHantu<=0)for(const g of ghosts)gerak(g,2.4,dt,pilihHantu);
+    gerak(pac,4,dt,pilihPac);
+    if(state==='play'&&tahanHantu<=0)for(const g of ghosts)gerak(g,1.6,dt,pilihHantu);
     if(state==='play'&&kebal<=0)for(const g of ghosts)if(Math.hypot(posX(g)-posX(pac),posY(g)-posY(pac))<.62){kenaHantu();break;}
   }
   takut=Math.max(0,takut-dt);
