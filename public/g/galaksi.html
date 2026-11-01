@@ -80,7 +80,7 @@ h1{font-family:var(--head);font-weight:900;font-size:clamp(22px,5vw,30px);line-h
   background-position:calc(100% - 20px) 20px,calc(100% - 14px) 20px;background-size:6px 6px;background-repeat:no-repeat}
 .field select option{background:#0b1030}
 .field input:focus,.field select:focus{border-color:var(--cyan);box-shadow:0 0 0 3px rgba(34,211,238,.18)}
-.row2{display:grid;grid-template-columns:1fr 120px;gap:10px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .err{color:var(--bad);font-size:13.5px;min-height:18px;margin:2px 0 8px}
 .btn{width:100%;height:54px;border:0;border-radius:14px;cursor:pointer;font-family:var(--head);font-weight:700;font-size:15px;letter-spacing:.14em;
   color:#05060f;background:linear-gradient(90deg,var(--cyan),#818cf8 55%,var(--pink));box-shadow:0 0 30px rgba(34,211,238,.35);transition:transform .1s,filter .2s}
@@ -159,7 +159,7 @@ kbd{font-family:var(--head);font-size:10.5px;padding:3px 7px;border-radius:6px;b
     <div class="field"><label for="inNama">Nama lengkap</label><input id="inNama" autocomplete="name" maxlength="60" placeholder="Tulis nama lengkapmu"></div>
     <div class="row2">
       <div class="field"><label for="inKelas">Kelas</label><div id="kelasBox"></div></div>
-      <div class="field"><label for="inAbsen" id="lblAbsen">No. absen</label><input id="inAbsen" inputmode="numeric" maxlength="3" placeholder="--"></div>
+      <div class="field"><label for="inAbsen" id="lblAbsen">No. absen</label><input id="inAbsen" maxlength="20" placeholder="--"></div>
     </div>
     <div class="err" id="sErr"></div>
     <button class="btn" id="btnStart" type="button">MULAI MISI</button>
@@ -448,7 +448,6 @@ function setupStart(){
   $('sChips').innerHTML='';chips.forEach(c=>{const s=document.createElement('span');s.className='chip';s.textContent=c;$('sChips').appendChild(s);});
   $('sFoot').textContent=[CFG.sekolah,CFG.guru?(TERM.Pengajar+': '+CFG.guru):''].filter(Boolean).join(' · ');
   $('lblAbsen').textContent=TERM.idLabel;
-  if(KAMPUS){const a=$('inAbsen');a.maxLength=20;a.inputMode='text';a.closest('.row2').style.gridTemplateColumns='1fr 1fr';}
   const list=String(CFG.kelas||'').split(',').map(s=>s.trim()).filter(Boolean);
   const box=$('kelasBox');let el;
   if(list.length>1){el=document.createElement('select');el.innerHTML='<option value="">Pilih kelas</option>';list.forEach(k=>{const o=document.createElement('option');o.value=o.textContent=k;el.appendChild(o);});}
